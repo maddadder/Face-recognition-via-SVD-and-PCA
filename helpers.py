@@ -22,7 +22,7 @@ def detect_face(img_gray):
     global faceCascade
 
     detected_face_gray_resized, detected_face_coords = None, None
-    detected_faces = faceCascade.detectMultiScale(img_gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30), flags=cv2.cv.CV_HAAR_SCALE_IMAGE)
+    detected_faces = faceCascade.detectMultiScale(img_gray, scaleFactor=1.1, minNeighbors=15, minSize=(30, 30), flags=cv2.CASCADE_SCALE_IMAGE)
     
     # Find the biggest face coordinates
     largest_info = find_larget_face(detected_faces)
@@ -48,7 +48,7 @@ def find_larget_face(detected_faces):
     ''' Find the largest face among all detected faces '''
     # No faces found
     if len(detected_faces) == 0:
-        print 'No faces found!'
+        print ('No faces found!')
         return None
 
     areas = [calculate_area(face) for face in detected_faces]

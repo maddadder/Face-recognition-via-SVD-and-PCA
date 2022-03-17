@@ -4,9 +4,9 @@
 import os
 import numpy as np
 import cv2
-import Tkinter as tk
+from tkinter import *
 from helpers import *
-
+from dotenv import load_dotenv
 # Matlab to Numpy syntax: https://docs.scipy.org/doc/numpy-dev/user/numpy-for-matlab-users.html
 # Based on https://wellecks.wordpress.com/tag/eigenfaces/ and other sources
 # Example of face data set: http://vision.ucsd.edu/datasets/yale_face_dataset_original/yalefaces.zip
@@ -101,7 +101,7 @@ def compute_svd_pca():
     save_eigenvectors = False
     if save_eigenvectors:
         print("Writing eigenvectors to disk...")
-        for i in xrange(n):
+        for i in range(n):
             f_name = os.path.join(res_dir, 'eigenvector_%s.png' % i)
             im = U[:, i].reshape(im_width, im_height)
             cv2.imwrite(f_name, im)
@@ -109,7 +109,7 @@ def compute_svd_pca():
     save_reconstructed = False
     if save_reconstructed:
         k = 2
-        print '\n', 'Save the reconstructed images based on only "%s" eigenfaces' % k
+        print ('\n', 'Save the reconstructed images based on only "%s" eigenfaces' % k)
         for img_id in range(n):
             # for k in range(1, total + 1):
             recon_img = mu + np.dot(weights[img_id, :k], e_faces[:, :k].T)
@@ -135,7 +135,7 @@ def recognize_face(face_gray):
         train_proj, e_faces, mean_face_flatten = compute_svd_pca()
 
     # Subtract mean face from the target face
-    print mean_face_flatten.shape
+    print (mean_face_flatten.shape)
     test_f = face_gray_flatten - mean_face_flatten
 
     # Projecting our test image into PCA space
@@ -147,6 +147,7 @@ def recognize_face(face_gray):
     for i in range(n):
         d[i] = euclidean_dist(train_proj[i], test_proj)
     min_dist_id = d.argmin()
+
 
     # found_face = X[min_dist_id].reshape((W, H))  # reshape image to initial form
 
@@ -164,7 +165,7 @@ def recognize_face(face_gray):
     found_face_filename = f_list[min_dist_id]
     found_face_img = cv2.imread(os.path.join(pre_processed_imgs_dir, found_face_filename))
 
-    print 'File name is "%s"' % found_face_filename
+    print ('File name is "%s"' % found_face_filename)
     cv2.imshow(found_face_filename, found_face_img)
     cv2.waitKey(0)
 
@@ -179,14 +180,17 @@ if __name__ == '__main__':
     single_img_recognition = False
 
     if video_cam_recognition:
-        video_capture = cv2.VideoCapture(0)
+        load_dotenv('.env')
+        camera_url = os.environ.get('CAMERA_URL')
+        video_capture = cv2.VideoCapture(camera_url)
+        #video_capture = cv2.VideoCapture(0)
 
         if not video_capture.isOpened():
             exit('Web camera is not connected')
 
-        print 'Available commands:'
-        print '\n', 'Press "Enter" to capture current frame as image from web camera and add it to the database'
-        print '\n', 'Press "Space" to recognize face from current frame from web camera \n'
+        print('Available commands:')
+        print ('\n', 'Press "Enter" to capture current frame as image from web camera and add it to the database')
+        print ('\n', 'Press "Space" to recognize face from current frame from web camera \n')
 
         try:
             while True:
@@ -211,28 +215,28 @@ if __name__ == '__main__':
                 k = cv2.waitKey(1)
                 if k % 256 == 32 and detected_face_gray is not None:
                     # Run recognition part
-                    print '>> Start recognizing the images...'
+                    print ('>> Start recognizing the images...')
                     recognize_face(detected_face_gray)
-                    print '<< Finished the recognition.'
+                    print ('<< Finished the recognition.')
 
                     # cv2.imwrite('target_face.png', frame)  # save target img
                 elif k & 0xFF in [ord('\r'), ord('\n')]:
-                    print 'Enter pressed (save image)'
+                    print ('Enter pressed (save image)')
                     
                     if detected_face_gray is not None:
                         # Run save new image form
-                        root = tk.Tk()
+                        root = Tk()
                         new_img_content = frame
-                        fullname_var = tk.StringVar(root)
+                        fullname_var = StringVar(root)
 
-                        tk.Label(root, text='Fill First and Last Name').grid(row=0)
-                        tk.Entry(root, textvariable=fullname_var).grid(row=1)
-                        tk.Button(root, text='Save new image', command=onSaveNewImage).grid(row=2)
+                        Label(root, text='Fill First and Last Name').grid(row=0)
+                        Entry(root, textvariable=fullname_var).grid(row=1)
+                        Button(root, text='Save new image', command=onSaveNewImage).grid(row=2)
 
                         root.mainloop()
 
                     else:
-                        print 'Face is not detected...'
+                        print ('Face is not detected...')
 
                 # Exit
                 elif k & 0xFF == ord('q'):

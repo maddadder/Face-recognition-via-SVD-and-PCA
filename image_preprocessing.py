@@ -7,7 +7,7 @@ from helpers import *
 # Images to be pre-processed
 f_list = [f for f in os.listdir(imgs_dir) if os.path.isfile(os.path.join(imgs_dir, f))]
 
-print 'Start do pre-processing on the images...'
+print('Start do pre-processing on the images...')
 
 # Start pre-processing (find face, make image grayscale + resize them to fixed size WxH)
 for file_name in f_list:
@@ -23,6 +23,6 @@ for file_name in f_list:
         path_to_new_img = os.path.join(pre_processed_imgs_dir, file_name)
         cv2.imwrite(path_to_new_img, detected_face_gray)
     else:
-        print "Face on the image %s was not found!" % file_name
+        print("Face on the image %s was not found!" % file_name)
 
-print 'Finished doing pre-processing.'
+print('Finished doing pre-processing.')
