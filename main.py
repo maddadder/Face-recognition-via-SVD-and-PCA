@@ -33,7 +33,8 @@ n = sum([True for f in f_list])  # Count total no of face images
 root = None
 new_img_content = None
 fullname_var = None
-    
+headless_mode = True
+
 def onSaveNewImage(*args):
     img_name = fullname_var.get() + '.jpg'
     img_path = os.path.join(imgs_dir, img_name)
@@ -131,7 +132,7 @@ def recognize_face(face_gray):
     # cv2.imshow('Grayscale face', face_gray); cv2.waitKey(0); exit()
 
     # If we didn't compute SVD + PCA earlier, then compute it
-    if None in [train_proj, e_faces, mean_face_flatten]:
+    if any(elem is None for elem in [train_proj, e_faces, mean_face_flatten]):
         train_proj, e_faces, mean_face_flatten = compute_svd_pca()
 
     # Subtract mean face from the target face
@@ -167,7 +168,10 @@ def recognize_face(face_gray):
 
     print ('File name is "%s"' % found_face_filename)
     cv2.imshow(found_face_filename, found_face_img)
-    cv2.waitKey(0)
+    if headless_mode == False:
+        cv2.waitKey(0)
+    else:
+        train_proj, e_faces, mean_face_flatten = None, None, None
 
 
 #################################################################
@@ -178,6 +182,7 @@ if __name__ == '__main__':
 
     video_cam_recognition = True
     single_img_recognition = False
+
 
     if video_cam_recognition:
         load_dotenv('.env')
@@ -191,57 +196,63 @@ if __name__ == '__main__':
         print('Available commands:')
         print ('\n', 'Press "Enter" to capture current frame as image from web camera and add it to the database')
         print ('\n', 'Press "Space" to recognize face from current frame from web camera \n')
-
+        seconds = 1
+        fps = video_capture.get(cv2.CAP_PROP_FPS) # Gets the frames per second
+        multiplier = fps * seconds
+        success, image = video_capture.read()
         try:
-            while True:
+            while success:
                 # Capture frame-by-frame
-                ret, frame = video_capture.read()
-                frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                frameId = int(round(video_capture.get(1))) #current frame number, rounded b/c sometimes you get frame intervals which aren't integers...this adds a little imprecision but is likely good enough
+                success, frame = video_capture.read()
 
-                detected_face_gray, detected_face_coords = detect_face(frame_gray)  # try to detect face
-                
-                frame_with_mask = None
-                if detected_face_gray is not None:
-                    # Mark found face
-                    mask = np.zeros_like(frame)  # init mask
-                    draw_rectangles(mask, [detected_face_coords])
-                    frame_with_mask = cv2.add(frame, mask)
+                if frameId % multiplier == 0:
+                    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-                # Show current frme
-                frame_to_show = frame_with_mask if frame_with_mask is not None else frame
-                cv2.imshow('Video', frame_to_show)  # show either frame (if face isn't detected or frame with mask)
-
-                # Process picture when SPACE is pressed
-                k = cv2.waitKey(1)
-                if k % 256 == 32 and detected_face_gray is not None:
-                    # Run recognition part
-                    print ('>> Start recognizing the images...')
-                    recognize_face(detected_face_gray)
-                    print ('<< Finished the recognition.')
-
-                    # cv2.imwrite('target_face.png', frame)  # save target img
-                elif k & 0xFF in [ord('\r'), ord('\n')]:
-                    print ('Enter pressed (save image)')
+                    detected_face_gray, detected_face_coords = detect_face(frame_gray)  # try to detect face
                     
+                    frame_with_mask = None
                     if detected_face_gray is not None:
-                        # Run save new image form
-                        root = Tk()
-                        new_img_content = frame
-                        fullname_var = StringVar(root)
+                        # Mark found face
+                        mask = np.zeros_like(frame)  # init mask
+                        draw_rectangles(mask, [detected_face_coords])
+                        frame_with_mask = cv2.add(frame, mask)
 
-                        Label(root, text='Fill First and Last Name').grid(row=0)
-                        Entry(root, textvariable=fullname_var).grid(row=1)
-                        Button(root, text='Save new image', command=onSaveNewImage).grid(row=2)
+                    # Show current frme
+                    frame_to_show = frame_with_mask if frame_with_mask is not None else frame
+                    cv2.imshow('Video', frame_to_show)  # show either frame (if face isn't detected or frame with mask)
 
-                        root.mainloop()
+                    # Process picture when SPACE is pressed
+                    k = cv2.waitKey(1)
+                    if (k % 256 == 32 or headless_mode) and detected_face_gray is not None:
+                        # Run recognition part
+                        print ('>> Start recognizing the images...')
+                        recognize_face(detected_face_gray)
+                        print ('<< Finished the recognition.')
 
-                    else:
-                        print ('Face is not detected...')
+                        # cv2.imwrite('target_face.png', frame)  # save target img
+                    elif k & 0xFF in [ord('\r'), ord('\n')]:
+                        print ('Enter pressed (save image)')
+                        
+                        if detected_face_gray is not None:
+                            # Run save new image form
+                            root = Tk()
+                            new_img_content = frame
+                            fullname_var = StringVar(root)
 
-                # Exit
-                elif k & 0xFF == ord('q'):
-                    break
-                # print repr(chr(k%256))  # print pressed button
+                            Label(root, text='Fill First and Last Name').grid(row=0)
+                            Entry(root, textvariable=fullname_var).grid(row=1)
+                            Button(root, text='Save new image', command=onSaveNewImage).grid(row=2)
+
+                            root.mainloop()
+
+                        else:
+                            print ('Face is not detected...')
+
+                    # Exit
+                    elif k & 0xFF == ord('q'):
+                        break
+                    # print repr(chr(k%256))  # print pressed button
 
         except KeyboardInterrupt:
             print('Ctrl + C issued...')

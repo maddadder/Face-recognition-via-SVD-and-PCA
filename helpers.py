@@ -48,7 +48,7 @@ def find_larget_face(detected_faces):
     ''' Find the largest face among all detected faces '''
     # No faces found
     if len(detected_faces) == 0:
-        print ('No faces found!')
+        #print ('No faces found!')
         return None
 
     areas = [calculate_area(face) for face in detected_faces]

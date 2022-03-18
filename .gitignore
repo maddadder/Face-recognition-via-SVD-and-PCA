@@ -93,7 +93,5 @@ ENV/
 .ropeproject
 
 my_access.json
-pre-processed-imgs/A.jpg
-pre-processed-imgs/B.jpg
-target_imgs/A.jpg
-target_imgs/B.jpg
+pre-processed-imgs/*
+target_imgs/*
