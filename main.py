@@ -20,7 +20,22 @@ from dotenv import load_dotenv
 train_proj, e_faces, mean_face_flatten = None, None, None
 
 # Target folder with pre-processed imgs (to perform SVD and PCA on them)
-f_list = [f_name for f_name in os.listdir(pre_processed_imgs_dir) if os.path.isfile(os.path.join(pre_processed_imgs_dir, f_name))]
+f_list = []
+file_count = 0
+file_list = sorted(os.listdir(pre_processed_imgs_dir))
+# if there is a large dataset then only grab a subset of them
+if len(file_list) > 1000:
+    for f_name in sorted(os.listdir(pre_processed_imgs_dir)):
+        if os.path.isfile(os.path.join(pre_processed_imgs_dir, f_name)):
+            # grab the first 10 and each 10th image
+            if file_count < 10 or file_count % 10 == 0:
+                f_list.append(f_name)
+            # don't grab more than 300 images
+            if len(f_list) >= 300:
+                break
+            file_count += 1
+else:
+    f_list = [f_name for f_name in file_list if os.path.isfile(os.path.join(pre_processed_imgs_dir, f_name))]
 n = sum([True for f in f_list])  # Count total no of face images
 
 # test_img_path = os.path.join(imgs_dir, f_list[-1])
@@ -92,7 +107,7 @@ def compute_svd_pca():
     weights = np.dot(ma_data, e_faces)  # TODO: Maybe swap + .T to e_faces
 
     # Some intermediate save:
-    save_mean_face = False
+    save_mean_face = True
     if save_mean_face:
         # Save mean face
         mean_face = mu.reshape(im_width, im_height)

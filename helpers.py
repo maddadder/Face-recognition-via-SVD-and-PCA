@@ -22,7 +22,7 @@ def detect_face(img_gray):
     global faceCascade
 
     detected_face_gray_resized, detected_face_coords = None, None
-    detected_faces = faceCascade.detectMultiScale(img_gray, scaleFactor=1.1, minNeighbors=15, minSize=(30, 30), flags=cv2.CASCADE_SCALE_IMAGE)
+    detected_faces = faceCascade.detectMultiScale(img_gray, scaleFactor=1.1, minNeighbors=6, minSize=(30, 30), flags=cv2.CASCADE_SCALE_IMAGE)
     
     # Find the biggest face coordinates
     largest_info = find_larget_face(detected_faces)
