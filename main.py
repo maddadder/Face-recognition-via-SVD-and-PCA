@@ -4,10 +4,11 @@
 import os
 import numpy as np
 import cv2
-from tkinter import *
+import tkinter as tk
 from helpers import *
 from dotenv import load_dotenv
 import matplotlib.pyplot as plt
+from datetime import datetime
 # Matlab to Numpy syntax: https://docs.scipy.org/doc/numpy-dev/user/numpy-for-matlab-users.html
 # Based on https://wellecks.wordpress.com/tag/eigenfaces/ and other sources
 # Example of face data set: http://vision.ucsd.edu/datasets/yale_face_dataset_original/yalefaces.zip
@@ -46,6 +47,8 @@ n = sum([True for f in f_list])  # Count total no of face images
 ######################################
 # Helpers
 ######################################
+EXTENSION = 'jpg'
+file_name_format = "{:s}-{:%Y%m%d_%H%M%S.%f}.{:s}"
 root = None
 new_img_content = None
 fullname_var = None
@@ -125,6 +128,8 @@ def compute_svd_pca():
             frame_normed = 255 * (im - im.min()) / (im.max() - im.min())
             frame_normed = np.array(frame_normed, np.int)
             cv2.imwrite(f_name, frame_normed)
+            #plt.imshow(im, cmap='gray')
+            #plt.show()
             if i > 10:
                 break
 
@@ -148,7 +153,7 @@ def compute_svd_pca():
     return train_proj, e_faces, mean_face_flatten
 
 
-def recognize_face(face_gray):
+def recognize_face(face_gray, frame_to_save):
     global train_proj, e_faces, mean_face_flatten, f_list
 
     face_gray_flatten = face_gray.flatten()  # convert face to vector
@@ -191,6 +196,13 @@ def recognize_face(face_gray):
 
     print ('File name is "%s"' % found_face_filename)
     cv2.imshow(found_face_filename, found_face_img)
+    
+    write_captured_image = False
+    if write_captured_image:
+        date = datetime.now()
+        file_name = file_name_format.format(found_face_filename, date, EXTENSION)
+        cv2.imwrite("detected/" + file_name, frame_to_save) 
+
     if headless_mode == False:
         cv2.waitKey(0)
 
@@ -248,7 +260,7 @@ if __name__ == '__main__':
                     if (k % 256 == 32 or headless_mode) and detected_face_gray is not None:
                         # Run recognition part
                         print ('>> Start recognizing the images...')
-                        recognize_face(detected_face_gray)
+                        recognize_face(detected_face_gray, frame_to_show)
                         print ('<< Finished the recognition.')
 
                         # cv2.imwrite('target_face.png', frame)  # save target img
@@ -257,13 +269,13 @@ if __name__ == '__main__':
                         
                         if detected_face_gray is not None:
                             # Run save new image form
-                            root = Tk()
+                            root = tk()
                             new_img_content = frame
-                            fullname_var = StringVar(root)
+                            fullname_var = tk.StringVar(root)
 
-                            Label(root, text='Fill First and Last Name').grid(row=0)
-                            Entry(root, textvariable=fullname_var).grid(row=1)
-                            Button(root, text='Save new image', command=onSaveNewImage).grid(row=2)
+                            tk.Label(root, text='Fill First and Last Name').grid(row=0)
+                            tk.Entry(root, textvariable=fullname_var).grid(row=1)
+                            tk.Button(root, text='Save new image', command=onSaveNewImage).grid(row=2)
 
                             root.mainloop()
 

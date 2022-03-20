@@ -95,3 +95,6 @@ ENV/
 my_access.json
 pre-processed-imgs/*
 target_imgs/*
+target_imgs.bak/*
+pre-processed-imgs.bak/*
+result/*
