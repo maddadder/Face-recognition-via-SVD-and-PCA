@@ -109,13 +109,6 @@ def compute_svd_pca():
 
     # Some intermediate save:
 
-    show_eigenface = True
-    if show_eigenface:
-        im = U[:, 0].reshape(im_width, im_height)
-        #cv2.imwrite(f_name, im)
-        plt.imshow(im, cmap='gray')
-        plt.show()
-
     save_mean_face = True
     if save_mean_face:
         # Save mean face
@@ -129,9 +122,13 @@ def compute_svd_pca():
         for i in range(n):
             f_name = os.path.join(res_dir, 'eigenvector_%s.png' % i)
             im = U[:, i].reshape(im_width, im_height)
-            cv2.imwrite(f_name, im)
+            frame_normed = 255 * (im - im.min()) / (im.max() - im.min())
+            frame_normed = np.array(frame_normed, np.int)
+            cv2.imwrite(f_name, frame_normed)
+            if i > 10:
+                break
 
-    save_reconstructed = True
+    save_reconstructed = False
     if save_reconstructed:
         k = 13
         print ('\n', 'Save the reconstructed images based on only "%s" eigenfaces' % k)
@@ -196,8 +193,6 @@ def recognize_face(face_gray):
     cv2.imshow(found_face_filename, found_face_img)
     if headless_mode == False:
         cv2.waitKey(0)
-    else:
-        train_proj, e_faces, mean_face_flatten = None, None, None
 
 
 #################################################################
