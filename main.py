@@ -7,6 +7,7 @@ import cv2
 from tkinter import *
 from helpers import *
 from dotenv import load_dotenv
+import matplotlib.pyplot as plt
 # Matlab to Numpy syntax: https://docs.scipy.org/doc/numpy-dev/user/numpy-for-matlab-users.html
 # Based on https://wellecks.wordpress.com/tag/eigenfaces/ and other sources
 # Example of face data set: http://vision.ucsd.edu/datasets/yale_face_dataset_original/yalefaces.zip
@@ -88,7 +89,7 @@ def compute_svd_pca():
 
     # Subtract the mean face from each image before performing SVD and PCA
     ma_data = X - mu
-
+    
     print("Computing SVD of data matrix")
     # Decompose the mean-centered matrix into three parts
 
@@ -107,6 +108,14 @@ def compute_svd_pca():
     weights = np.dot(ma_data, e_faces)  # TODO: Maybe swap + .T to e_faces
 
     # Some intermediate save:
+
+    show_eigenface = True
+    if show_eigenface:
+        im = U[:, 0].reshape(im_width, im_height)
+        #cv2.imwrite(f_name, im)
+        plt.imshow(im, cmap='gray')
+        plt.show()
+
     save_mean_face = True
     if save_mean_face:
         # Save mean face
@@ -122,15 +131,17 @@ def compute_svd_pca():
             im = U[:, i].reshape(im_width, im_height)
             cv2.imwrite(f_name, im)
 
-    save_reconstructed = False
+    save_reconstructed = True
     if save_reconstructed:
-        k = 2
+        k = 13
         print ('\n', 'Save the reconstructed images based on only "%s" eigenfaces' % k)
         for img_id in range(n):
             # for k in range(1, total + 1):
             recon_img = mu + np.dot(weights[img_id, :k], e_faces[:, :k].T)
             recon_img.shape = (im_width, im_height)  # transform vector to initial image size
             cv2.imwrite(os.path.join(res_dir, 'img_reconstr_%s_k=%s.png' % (f_list[img_id], k)), recon_img)
+            if img_id > 5:
+                break
 
     ###########################################
     # We have already projected our training images into pca subspace as yn=weights or Yn = E.T * (Xn - mean_face).
